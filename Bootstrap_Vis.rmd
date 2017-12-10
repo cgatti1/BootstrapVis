@@ -1,0 +1,91 @@
+---
+title: "Visualizing the bootstrap process"
+author: "Christopher Gatti"
+date: "December 7, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+#devtools::install_github("kevinstadler/Rmdanimation")
+```
+
+```{r}
+library(animation)
+library(Rmdanimation)
+ani.options(convert = 'c:/program files/imagemagick/convert.exe', interval=.15, loop = 1)
+```
+
+#A random distribution
+
+- First we are going to create a random distribution of numbers. set.seed(40) allows us to control where the random number generation will begin, so the results are similar across computers, or if we wanted to run the random generation again on this computer and get the same results. 40 was chosen at random.
+- runif() is a function that will generate a random distribution of numbers, in this case, 20 numbers between 0 and 1. 
+```{r}
+set.seed(40)
+x <- runif(20)
+```
+
+###This histogram shows the frequency distribution for our randomly generated numbers. 
+```{r}
+hist(x, col='green', main ="Random Distribution")
+```
+
+- As expected, there is no normal distribution here. 
+
+#The bootstrap process
+
+First we will watch the animation below to observe the creation of a normal distribution. Then we will explain what is happening line by line, graph by graph. Clicking the graph will restart the animation. 
+
+```{r cache=TRUE, results='asis'}
+boots = NULL
+set.seed(7)
+cat(animatedGIF({for (i in 1:120){
+  Dist <- mean(sample(x, 200, replace=TRUE))
+  boots <- c(boots, Dist)
+  hist(boots, col='blue', main="Creation of Normal Distribution")
+}},"testanimation"))
+
+```
+
+- First we must set boots = NULL. This will be important later.
+
+- set.seed(7) serves the same function as earlier. We set the seed so the results are reproducible across machines, or if we need to recreate the distribution again. 7 was chosen at random.
+
+- cat(animatedGIF(...)) is the function to create a gif output for the html_document output. This comes from the 'Rmdanimation' package.  
+
+- for(i in 1:150) means we will be running the bootstrap 150 times
+
+- Dist is being assigned as an object. To explain what the object represents we will work backwards through the functions on that line. 
+
+- sample() does exactly that. We are taking a sample number from the 20 numbers availabile in our random distribution, x. 200 means we will be taking 200 different numbers from that sample. replace=TRUE means after we sample a number, R will replace that number before taking the next sample. So R will pull 200 sample numbers, and each one comes from the same available selection of 20 numbers. If replace=FALSE, we would not be able to sample more than the 20 numbers, since none of them would be replaced. Using sample(x,20,replace=FALSE) would give us the same list of 20 numbers as when we started. If sample=FALSE, the number of samples cannot exceed the number available in x. 
+
+- mean() is now going to average all 200 numbers we acquired using the sample function. 
+
+- So, for i = 1, we have now created an object called Dist, which is a single number that is the average of our 200 samples. 
+
+- boots is the next object to be altered. Had we not assigned boots=NULL, R would not know how to handle this next part. For i=1, boots started out empty. the c() is short for concatenate, or basically link together. We are combining NULL with the first value, to create a list with a length of 1 number.
+
+- Finally hist() creates a histogram, similar to the first one we witnessed showing the frequency of x.  
+
+#Interpreting the plots
+
+- What we see are 120 plots being created sequentially, with each additional plot adding another number, which is the average of 200 randomly selected numbers from our original distribution. 
+
+- The first four plots of the gif represent this well, shown below. 
+
+- The upper left plot shows that the value of ~.5 was created first, with the frequency of 1. The upper right plot show 2 observations, one between .455 and .46, and the other between .465 and .47, each has a frequency of one. And so on...
+
+```{r}
+boots = NULL
+par(mfrow=c(2,2))
+set.seed(7)
+for (i in 1:4){
+  Dist <- mean(sample(x, 200, replace=TRUE))
+  boots <- c(boots, Dist)
+  hist(boots, col='red')}
+```
+
+Through this process, we now have a normal distribution of an otherwise randomly distributed set of data. 
+
+
+
